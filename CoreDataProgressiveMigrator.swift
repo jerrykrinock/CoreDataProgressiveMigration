@@ -38,17 +38,17 @@ class CoreDataProgressiveMigrator : NSObject {
         do {
             var hacker = CoreDataVersionHacker()
             let allVersionNames = try hacker.availableVersionNames(momdName: self.momdName)
-            let migrator = CoreDataProgressiveMigratorGuts.init(storeUrl: storeUrl,
-                                                                storeType: self.storeType,
-                                                                momdName: self.momdName,
-                                                                versionNames: allVersionNames)
             
             guard let currentVersion = allVersionNames.last else {
                 throw CoreDataProgressiveMigratorError.noVersionNamesFound as NSError
             }
             
-            let startingVersion = try migrator.startingVersion()                
+            let startingVersion = try self.startingVersionfromAmong(allVersionNames)
             if (startingVersion != currentVersion) {
+                let migrator = CoreDataProgressiveMigratorGuts.init(storeUrl: storeUrl,
+                                                                    storeType: self.storeType,
+                                                                    momdName: self.momdName,
+                                                                    versionNames: allVersionNames)
                 /* In William Boles' example, tHe following do+catch was
                  wrapped in DispatchQueue.global(qos: .userInitiated).async {...}
                  but we saw no need for that and want to return synchronously. */
@@ -70,6 +70,30 @@ class CoreDataProgressiveMigrator : NSObject {
             throw error as NSError
         }
     }
+    
+    public func startingVersionfromAmong(_ versionNames: [String]) throws -> String {
+        var metadata: [String: Any]
+        metadata = try NSPersistentStoreCoordinator.metadataForPersistentStore(ofType: self.storeType,
+                                                                               at: self.storeUrl,
+                                                                               options: nil)
+        
+        let bundle = Bundle.mainAppBundle()
+        var startingVersion: String
+        for aVersion in versionNames.reversed() {
+            let model = try NSManagedObjectModel.loadFrom(bundle: bundle,
+                                                          momdName: self.momdName,
+                                                          versionName: aVersion)
+            if (model.isConfiguration(withName: nil,
+                                      compatibleWithStoreMetadata: metadata)) {
+                startingVersion = aVersion
+                return startingVersion
+            }
+        }
+        
+        throw CoreDataProgressiveMigratorError.couldNotFindVersionFromWhichToStart
+    }
+    
+
 
     /**
      Inner Objective-C wrapper around migrateStoreIfNeeded()

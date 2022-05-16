@@ -28,32 +28,6 @@ class CoreDataProgressiveMigratorGuts {
          }
     }
         
-    public func startingVersion() throws -> String {
-        if (self._startingVersion == nil) {
-            var metadata: [String: Any]
-            metadata = try NSPersistentStoreCoordinator.metadataForPersistentStore(ofType: self.storeType,
-                                                                                   at: self.storeUrl,
-                                                                                   options: nil)
-            
-            let bundle = Bundle.mainAppBundle()
-            var startingVersion: String
-            for aVersion in self.versionNames.reversed() {
-                let model = try NSManagedObjectModel.loadFrom(bundle: bundle,
-                                                              momdName: self.momdName,
-                                                              versionName: aVersion)
-                if (model.isConfiguration(withName: nil,
-                                          compatibleWithStoreMetadata: metadata)) {
-                    startingVersion = aVersion
-                    self._startingVersion = startingVersion
-                    return startingVersion
-                }
-            }
-            
-        }
-        
-        throw CoreDataProgressiveMigratorError.couldNotFindVersionFromWhichToStart
-    }
-    
     private static func mappingModel(fromSourceModel sourceModel: NSManagedObjectModel, toDestinationModel destinationModel: NSManagedObjectModel) -> NSMappingModel? {
         guard let customMapping = customMappingModel(fromSourceModel: sourceModel, toDestinationModel: destinationModel) else {
             return inferredMappingModel(fromSourceModel:sourceModel, toDestinationModel: destinationModel)
