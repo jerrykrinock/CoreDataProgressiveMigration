@@ -24,11 +24,23 @@ extension NSManagedObjectModel {
         let momURL = bundle.url(forResource: versionName, withExtension: "mom", subdirectory: momdPkgName)
         
         guard let url = omoURL ?? momURL else {
-            throw CoreDataProgressiveMigratorError.cannotFindModelInBundle
+            throw NSError.init(code: CoreDataProgressiveMigrationErrorCodes.cannotFindModelInBundle.rawValue,
+                               localizedDescription: NSLocalizedString(
+                                "Cannot find path to data model in application bundle",
+                                comment: "error during migration of user's data to new version"),
+                               localizedRecoverySuggestion: NSLocalizedString(
+                                "Try maybe reinstalling the app",
+                                comment: "error during migration of user's data to new version"))
         }
         
         guard let model = NSManagedObjectModel(contentsOf: url) else {
-            throw CoreDataProgressiveMigratorError.cannotLoadModelInBundle
+            throw NSError.init(code: CoreDataProgressiveMigrationErrorCodes.cannotLoadModelInBundle.rawValue,
+                               localizedDescription: NSLocalizedString(
+                                "Found path to data model in app bundle, but cannot load it",
+                                comment: "error during migration of user's data to new version"),
+                               localizedRecoverySuggestion: NSLocalizedString(
+                                "Try maybe reinstalling the app",
+                                comment: "error during migration of user's data to new version"))
         }
         
         return model

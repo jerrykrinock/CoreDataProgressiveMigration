@@ -65,7 +65,10 @@ class CoreDataProgressiveMigratorGuts {
         let mainAppBundle = Bundle.mainAppBundle()
         while (true) {
             guard let sourceVersionGuarded = sourceVersion else {
-                throw CoreDataProgressiveMigratorError.shouldNeverHappen1
+                throw NSError.init(code: CoreDataProgressiveMigrationErrorCodes.noSourceVersion.rawValue,
+                                   localizedDescription: NSLocalizedString(
+                                    "No source version for migration",
+                                    comment: "error during migration of user's data to new version"))
             }
             let sourceModel = try NSManagedObjectModel.loadFrom(bundle: mainAppBundle,
                                                                 momdName: self.momdName,
@@ -81,11 +84,17 @@ class CoreDataProgressiveMigratorGuts {
                                                                 versionName: destinVersion)
             }
             guard let destinModelGuarded = destinModel else {
-                throw CoreDataProgressiveMigratorError.couldNotMakeDestinModel
+                throw NSError.init(code: CoreDataProgressiveMigrationErrorCodes.couldNotMakeDestinModel.rawValue,
+                                   localizedDescription: NSLocalizedString(
+                                    "Could not create data model for destination when migrating user data",
+                                    comment: "error during migration of user's data to new version"))
             }
             guard let mappingModel = Self.mappingModel(fromSourceModel: sourceModel,
                                                        toDestinationModel: destinModelGuarded) else {
-                throw CoreDataProgressiveMigratorError.couldNotGetMappingModel
+                throw NSError.init(code: CoreDataProgressiveMigrationErrorCodes.couldNotGetMappingModel.rawValue,
+                                   localizedDescription: NSLocalizedString(
+                                    "Could not get mapping model to migrate user data",
+                                    comment: "error during migration of user's data to new version"))
             }
             let manager = NSMigrationManager(sourceModel: sourceModel, destinationModel: destinModelGuarded)
             destinStoreUrl = URL(fileURLWithPath: NSTemporaryDirectory(), isDirectory: true).appendingPathComponent(UUID().uuidString)
@@ -99,7 +108,11 @@ class CoreDataProgressiveMigratorGuts {
                                          destinationType: self.storeType,
                                          destinationOptions: nil)
             } catch let error {
-                throw CoreDataProgressiveMigratorError.migrationStepFailed(underlyingError: error)
+                throw NSError.init(code: CoreDataProgressiveMigrationErrorCodes.migrationStepFailed.rawValue,
+                                   localizedDescription: NSLocalizedString(
+                                    "A step failed when progressively migrating user data",
+                                    comment: "error during migration of user's data to new version"),
+                                   underlyingError: error)
             }
             
             if sourceStoreUrl != self.storeUrl {
