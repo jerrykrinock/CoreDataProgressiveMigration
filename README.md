@@ -1,6 +1,5 @@
 [![Build Status](https://travis-ci.org/wibosco/CoreDataMigrationRevised-Example.svg)](https://travis-ci.org/wibosco/CoreDataMigrationRevised-Example)
-<a href="https://swift.org"><img src="https://img.shields.io/badge/Swift-4.2-orange.svg?style=flat" alt="Swift" /></a>
-<a href="https://twitter.com/wibosco"><img src="https://img.shields.io/badge/twitter-@wibosco-blue.svg?style=flat" alt="Twitter: @wibosco" /></a>
+<a href="https://swift.org"><img src="https://img.shields. io/badge/Swift-4.2-orange.svg?style=flat" alt="Swift" /></a>
 
 #  CoreDataProgressiveMigration
 
@@ -29,6 +28,8 @@ Our fork is it is not a tutorial example as William's code is.  CoreDataProgress
 ## How To Use
 
 * Determine where you are going to splice the call to CoreDataProgressiveMigrator into your code.  This call will require three parameters: `storeType` (for example, NSSQLiteStoreType), `storeURL` (file URL), and name of the data model (.momd) file.  This call returns synchronously.  When CoreDataProgressiveMigrator returns, your code may create its Core Data stack and load its store as before, completely unaware that anything was done.  For Core Data document stores (`NSDocument`, `NSPersistentDocument`, `BSManagedDocument`), we recommend splicing into the your document's subclass' override of `read(from:ofType:)`, just before calling super.  Note that this is before the document's Core Data Stack is created.  For "shoebox" stores, we recommend doing this just prior to creating your NSPersistentContainer or Core Data stack.
+
+* Add all of the .swift files in this repo except CoreDataMigrationShepherd.swift to your Xcode target.  CoreDataMigrationShepherd is an example of a CoreDataMigrationDelegate which you may study in designing your own deletage, if desired.  It is dependont on symbols in my project and will not compile in yours. 
 
 * If your chosen splice location is in Objective-C code, you will need to add a shim file.  (Sorry, see explanation in documentation > CoreDataProgressiveMigrator > Details.)  Add a Swift file named something like MyClass+MigrationShim.  In this file, define an extension to MyClass containing a function marked @objc, named something like `migrateIfNeeded`, which throws, and returns Void.  You may pass in parameters if needed.  It may be either a class or instance method.  Example:
 
