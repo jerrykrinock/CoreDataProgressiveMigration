@@ -1,32 +1,25 @@
 import Foundation
 import CoreData
 
-enum CoreDataProgressiveMigratorError : Error {
-    case noVersionNamesFound
-    case noStartingIndexEeeek
-    case cannotFindModelInBundle
-    case cannotLoadModelInBundle
-    case cannotGetStoreMetadata(underlyingError: Error)
-    case migrationStepFailed(underlyingError: Error)
-    case shouldNeverHappen1
-    case couldNotGetMappingModel
-    case couldNotMakeDestinModel
-    case couldNotFindVersionFromWhichToStart
-}
-
 /**
  The top level class for Core Data progressive migrations
+ 
+ We did not mark this class @objc because a parameter of its init() method
+ is CoreDataMigrationDelegate, and the shpuldMigrate() func in that
+ protocol throws an error and returns a BOOL, which is not allowed in a
+ @objc func, and we don't want to sacrifice that Swift nicety for Objective-C.
  */
 class CoreDataProgressiveMigrator : NSObject {
     private var storeUrl: URL
     private var storeType: String
     private var momdName: String
+    private var delegate: CoreDataMigrationDelegate?
 
-    @objc
-    public init(storeUrl: URL, storeType: String = NSSQLiteStoreType, momdName: String) {
+    public init(storeUrl: URL, storeType: String = NSSQLiteStoreType, momdName: String, delegate: CoreDataMigrationDelegate? = nil) {
         self.storeType = storeType
         self.storeUrl = storeUrl
         self.momdName = momdName
+        self.delegate = delegate
     }
     
     /**
@@ -34,36 +27,55 @@ class CoreDataProgressiveMigrator : NSObject {
      
      This function is synchronous; blocks until migration is complete or fails.
      */
-    public func migrateStoreIfNeeded() throws -> [String]? {
-        do {
+    @discardableResult public func migrateStoreIfNeeded() throws -> [String]? {
+       do {
             var hacker = CoreDataVersionHacker()
             let allVersionNames = try hacker.availableVersionNames(momdName: self.momdName)
             
             guard let currentVersion = allVersionNames.last else {
-                throw CoreDataProgressiveMigratorError.noVersionNamesFound as NSError
+                throw NSError.init(code: CoreDataProgressiveMigrationErrorCodes.noVersionNamesFound.rawValue,
+                                   localizedDescription: NSLocalizedString(
+                                    "No version names found to migrate user data",
+                                    comment: "error during migration of user's data to new version"))
             }
             
+
             let startingVersion = try self.startingVersionfromAmong(allVersionNames)
             if (startingVersion != currentVersion) {
-                let migrator = CoreDataProgressiveMigratorGuts.init(storeUrl: storeUrl,
-                                                                    storeType: self.storeType,
-                                                                    momdName: self.momdName,
-                                                                    versionNames: allVersionNames)
-                /* In William Boles' example, tHe following do+catch was
-                 wrapped in DispatchQueue.global(qos: .userInitiated).async {...}
-                 but we saw no need for that and want to return synchronously. */
-                do {
-                    guard let startingIndex = allVersionNames.firstIndex(of: startingVersion) else {
-                        throw CoreDataProgressiveMigratorError.noStartingIndexEeeek
+                var shouldMigrate = true
+                if let myDelegate = self.delegate {
+                    shouldMigrate = try myDelegate.shpuldMigrate(self.storeUrl)
+                }
+                if (shouldMigrate) {
+                    let migrator = CoreDataProgressiveMigratorGuts.init(storeUrl: storeUrl,
+                                                                        storeType: self.storeType,
+                                                                        momdName: self.momdName,
+                                                                        versionNames: allVersionNames)
+                    /* In William Boles' example, tHe following do+catch was
+                     wrapped in DispatchQueue.global(qos: .userInitiated).async {...}
+                     but we saw no need for that and want to return synchronously. */
+                    do {
+                        guard let startingIndex = allVersionNames.firstIndex(of: startingVersion) else {
+                            throw NSError.init(code: CoreDataProgressiveMigrationErrorCodes.noStartingIndexEeeek.rawValue,
+                                               localizedDescription: NSLocalizedString(
+                                                "No starting index found of versions to migrate user data",
+                                                comment: "error during migration of user's data to new version"))
+                        }
+                        var relevantVersionNames = Array(allVersionNames[startingIndex...])
+                        try migrator.migrate(thruVersions: relevantVersionNames)
+                        relevantVersionNames.removeLast()
+                        return relevantVersionNames
+                    } catch {
+                        throw error as NSError
                     }
-                    var relevantVersionNames = Array(allVersionNames[startingIndex...])
-                    try migrator.migrate(thruVersions: relevantVersionNames)
-                    relevantVersionNames.removeLast()
-                    return relevantVersionNames
-                } catch {
-                    throw error as NSError
+                } else {
+                    throw NSError.init(code: CoreDataProgressiveMigrationErrorCodes.delegateSaidNo.rawValue,
+                                       localizedDescription: NSLocalizedString(
+                                        "The delegate said 'no' to migrating this user data",
+                                        comment: "error during migration of user's data to new version"))
                 }
             } else {
+                /* Normal case when migration is not necessary */
                 return nil
             }
         } catch {
@@ -89,12 +101,12 @@ class CoreDataProgressiveMigrator : NSObject {
                 return startingVersion
             }
         }
-        
-        throw CoreDataProgressiveMigratorError.couldNotFindVersionFromWhichToStart
+        throw NSError.init(code: CoreDataProgressiveMigrationErrorCodes.couldNotFindVersionFromWhichToStart.rawValue,
+                           localizedDescription: NSLocalizedString(
+                            "Cound not find version from which to start migration",
+                            comment: "error during migration of user's data to new version"))
     }
     
-
-
     /**
      Inner Objective-C wrapper around migrateStoreIfNeeded()
 
