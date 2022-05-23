@@ -33,10 +33,15 @@ class CoreDataProgressiveMigrator : NSObject {
             let allVersionNames = try hacker.availableVersionNames(momdName: self.momdName)
             
             guard let currentVersion = allVersionNames.last else {
-                throw NSError.init(code: CoreDataProgressiveMigrationErrorCodes.noVersionNamesFound.rawValue,
-                                   localizedDescription: NSLocalizedString(
-                                    "No version names found to migrate user data",
-                                    comment: "error during migration of user's data to new version"))
+                throw NSError.init(
+                    domain: CoreDataMigrationErrorDomain,
+                    code: CoreDataProgressiveMigrationErrorCodes.noVersionNamesFound.rawValue,
+                    localizedDescription: NSLocalizedString(
+                        "No version names found to migrate user data",
+                        comment: "error during migration of user's data to new version"),
+                    localizedRecoverySuggestion: NSLocalizedString(
+                        "Reinstall this application",
+                        comment: "error during migration of user's data to new version"))
             }
             
 
@@ -56,10 +61,15 @@ class CoreDataProgressiveMigrator : NSObject {
                      but we saw no need for that and want to return synchronously. */
                     do {
                         guard let startingIndex = allVersionNames.firstIndex(of: startingVersion) else {
-                            throw NSError.init(code: CoreDataProgressiveMigrationErrorCodes.noStartingIndexEeeek.rawValue,
-                                               localizedDescription: NSLocalizedString(
-                                                "No starting index found of versions to migrate user data",
-                                                comment: "error during migration of user's data to new version"))
+                            throw NSError.init(
+                                domain: CoreDataMigrationErrorDomain,
+                                code: CoreDataProgressiveMigrationErrorCodes.noStartingIndexEeeek.rawValue,
+                                localizedDescription: NSLocalizedString(
+                                    "No starting index found of versions to migrate user data",
+                                    comment: "error during migration of user's data to new version"),
+                                localizedRecoverySuggestion: NSLocalizedString(
+                                    "Reinstall this application",
+                                    comment: "error during migration of user's data to new version"))
                         }
                         var relevantVersionNames = Array(allVersionNames[startingIndex...])
                         try migrator.migrate(thruVersions: relevantVersionNames)
@@ -69,10 +79,12 @@ class CoreDataProgressiveMigrator : NSObject {
                         throw error as NSError
                     }
                 } else {
-                    throw NSError.init(code: CoreDataProgressiveMigrationErrorCodes.delegateSaidNo.rawValue,
-                                       localizedDescription: NSLocalizedString(
-                                        "The delegate said 'no' to migrating this user data",
-                                        comment: "error during migration of user's data to new version"))
+                    throw NSError.init(
+                        domain: CoreDataMigrationErrorDomain,
+                        code: CoreDataProgressiveMigrationErrorCodes.delegateSaidNo.rawValue,
+                        localizedDescription: NSLocalizedString(
+                            "The delegate said 'no' to migrating this user data",
+                            comment: "error during migration of user's data to new version"))
                 }
             } else {
                 /* Normal case when migration is not necessary */
@@ -101,10 +113,12 @@ class CoreDataProgressiveMigrator : NSObject {
                 return startingVersion
             }
         }
-        throw NSError.init(code: CoreDataProgressiveMigrationErrorCodes.couldNotFindVersionFromWhichToStart.rawValue,
-                           localizedDescription: NSLocalizedString(
-                            "Cound not find version from which to start migration",
-                            comment: "error during migration of user's data to new version"))
+        throw NSError.init(
+            domain: CoreDataMigrationErrorDomain,
+            code: CoreDataProgressiveMigrationErrorCodes.couldNotFindAMatchingDataModel.rawValue,
+            localizedDescription: NSLocalizedString(
+                "Cound not find model version for given store",
+                comment: "error during migration of user's data to new version"))
     }
     
     /**

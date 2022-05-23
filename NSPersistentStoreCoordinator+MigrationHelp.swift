@@ -1,10 +1,6 @@
-//
-//  NSPersistentStoreCoordinator+SQLite.swift
-//  CoreDataMigration-Example
-//
-//  Created by William Boles on 15/09/2017.
+//  Adapted from file "NSPersistentStoreCoordinator+SQLite.swift" in project
+//  "CoreDataMigration-Example", written by William Boles on 15/09/2017.
 //  Copyright © 2017 William Boles. All rights reserved.
-//
 
 import Foundation
 

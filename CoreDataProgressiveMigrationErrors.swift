@@ -3,6 +3,37 @@
  */
 let CoreDataMigrationErrorDomain = "CoreDataMigrationErrorDomain"
 
+class CoreDataProgressiveMigration : NSObject {
+    @objc
+    public static func doesErrorIndicateStoreCorrupt(_ error: NSError?) -> Bool {
+        guard let error = error else {
+            return false
+        }
+        if (error.domain != CoreDataMigrationErrorDomain) {
+            return false
+        }
+        return (
+            error.code == CoreDataProgressiveMigrationErrorCodes.noSourceVersion.rawValue
+        ||
+            error.code == CoreDataProgressiveMigrationErrorCodes.cannotGetStoreMetadata.rawValue
+        )
+    }
+
+    @objc
+    public static func doesErrorIndicateNoModelForStore(_ error: NSError?) -> Bool {
+        guard let error = error else {
+            return false
+        }
+        if (error.domain != CoreDataMigrationErrorDomain) {
+            return false
+        }
+        return (
+            error.code == CoreDataProgressiveMigrationErrorCodes.couldNotFindAMatchingDataModel.rawValue
+        )
+    }
+}
+
+
 @objc
 enum CoreDataProgressiveMigrationErrorCodes : Int {
     case noVersionNamesFound = 492801
@@ -14,7 +45,7 @@ enum CoreDataProgressiveMigrationErrorCodes : Int {
     case noSourceVersion = 492807
     case couldNotGetMappingModel = 492808
     case couldNotMakeDestinModel = 492809
-    case couldNotFindVersionFromWhichToStart = 492810
+    case couldNotFindAMatchingDataModel = 492810
     case delegateFailedPreflight = 492811
     case delegateFailedPostflight = 492812
     case delegateSaidNo = 492813

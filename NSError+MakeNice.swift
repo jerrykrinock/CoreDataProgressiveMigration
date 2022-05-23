@@ -2,6 +2,7 @@ import Foundation
 
 extension NSError {
     convenience init(
+        domain: String? = Bundle.mainAppBundle().bundleIdentifier,
         code: Int,
         localizedDescription: String,
         underlyingError: Error? = nil,
@@ -16,7 +17,6 @@ extension NSError {
             userInfo[NSLocalizedRecoverySuggestionErrorKey] = localizedRecoverySuggestion
         }
 
-        let domain = Bundle.main.bundleIdentifier
         self.init(domain:domain ?? "No bundle ID !?!?",
                 code: code,
                 userInfo: userInfo)

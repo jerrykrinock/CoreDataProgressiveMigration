@@ -1,10 +1,6 @@
-//
-//  CoreDataMigrator.swift
-//  CoreDataMigration-Example
-//
-//  Created by William Boles on 11/09/2017.
+//  Adapted from file "CoreDataMigrator.swift" in project
+//  "CoreDataMigration-Example", written by William Boles on 11/09/2017.
 //  Copyright © 2017 William Boles. All rights reserved.
-//
 
 import CoreData
 
@@ -65,10 +61,15 @@ class CoreDataProgressiveMigratorGuts {
         let mainAppBundle = Bundle.mainAppBundle()
         while (true) {
             guard let sourceVersionGuarded = sourceVersion else {
-                throw NSError.init(code: CoreDataProgressiveMigrationErrorCodes.noSourceVersion.rawValue,
-                                   localizedDescription: NSLocalizedString(
-                                    "No source version for migration",
-                                    comment: "error during migration of user's data to new version"))
+                throw NSError.init(
+                    domain: CoreDataMigrationErrorDomain,
+                    code: CoreDataProgressiveMigrationErrorCodes.noSourceVersion.rawValue,
+                    localizedDescription: NSLocalizedString(
+                        "No source version for migration",
+                        comment: "error during migration of user's data to new version"),
+                    localizedRecoverySuggestion: NSLocalizedString(
+                        "Reinstall this application",
+                        comment: "error during migration of user's data to new version"))
             }
             let sourceModel = try NSManagedObjectModel.loadFrom(bundle: mainAppBundle,
                                                                 momdName: self.momdName,
@@ -84,17 +85,27 @@ class CoreDataProgressiveMigratorGuts {
                                                                 versionName: destinVersion)
             }
             guard let destinModelGuarded = destinModel else {
-                throw NSError.init(code: CoreDataProgressiveMigrationErrorCodes.couldNotMakeDestinModel.rawValue,
-                                   localizedDescription: NSLocalizedString(
-                                    "Could not create data model for destination when migrating user data",
-                                    comment: "error during migration of user's data to new version"))
+                throw NSError.init(
+                    domain: CoreDataMigrationErrorDomain,
+                    code: CoreDataProgressiveMigrationErrorCodes.couldNotMakeDestinModel.rawValue,
+                    localizedDescription: NSLocalizedString(
+                        "Could not create data model for destination when migrating user data",
+                        comment: "error during migration of user's data to new version"),
+                    localizedRecoverySuggestion: NSLocalizedString(
+                        "Reinstall this application",
+                        comment: "error during migration of user's data to new version"))
             }
             guard let mappingModel = Self.mappingModel(fromSourceModel: sourceModel,
                                                        toDestinationModel: destinModelGuarded) else {
-                throw NSError.init(code: CoreDataProgressiveMigrationErrorCodes.couldNotGetMappingModel.rawValue,
-                                   localizedDescription: NSLocalizedString(
-                                    "Could not get mapping model to migrate user data",
-                                    comment: "error during migration of user's data to new version"))
+                throw NSError.init(
+                    domain: CoreDataMigrationErrorDomain,
+                    code: CoreDataProgressiveMigrationErrorCodes.couldNotGetMappingModel.rawValue,
+                    localizedDescription: NSLocalizedString(
+                        "Could not get mapping model to migrate user data",
+                        comment: "error during migration of user's data to new version"),
+                    localizedRecoverySuggestion: NSLocalizedString(
+                        "Reinstall this application",
+                        comment: "error during migration of user's data to new version"))
             }
             let manager = NSMigrationManager(sourceModel: sourceModel, destinationModel: destinModelGuarded)
             destinStoreUrl = URL(fileURLWithPath: NSTemporaryDirectory(), isDirectory: true).appendingPathComponent(UUID().uuidString)
@@ -108,11 +119,13 @@ class CoreDataProgressiveMigratorGuts {
                                          destinationType: self.storeType,
                                          destinationOptions: nil)
             } catch let error {
-                throw NSError.init(code: CoreDataProgressiveMigrationErrorCodes.migrationStepFailed.rawValue,
-                                   localizedDescription: NSLocalizedString(
-                                    "A step failed when progressively migrating user data",
-                                    comment: "error during migration of user's data to new version"),
-                                   underlyingError: error)
+                throw NSError.init(
+                    domain: CoreDataMigrationErrorDomain,
+                    code: CoreDataProgressiveMigrationErrorCodes.migrationStepFailed.rawValue,
+                    localizedDescription: NSLocalizedString(
+                        "A step failed when progressively migrating user data",
+                        comment: "error during migration of user's data to new version"),
+                    underlyingError: error)
             }
             
             if sourceStoreUrl != self.storeUrl {
