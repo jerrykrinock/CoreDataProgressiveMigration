@@ -1,6 +1,8 @@
 /**
- Error codes used in CoreDataProgressMigration classes
+ Error codes used in CoreDataProgressiveMigration classes
  */
+let CoreDataMigrationErrorDomain = "CoreDataMigrationErrorDomain"
+
 @objc
 enum CoreDataProgressiveMigrationErrorCodes : Int {
     case noVersionNamesFound = 492801
