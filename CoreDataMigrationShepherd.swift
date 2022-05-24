@@ -6,10 +6,11 @@ enum CoreDataMigrationShepherdError : Error {
 
 
 /**
- An example of a CoreDataMigrationDelegate
+ An **example** of a CoreDataMigrationDelegate
 
- Of course, this is going to application-specific, so you will probably make
- your own version and include your file in your project instead of this file.
+ Of course, this is going to application-specific.  You may copy this file
+ to your project if you want to, but it will not compile until you remove the
+ references to symbols in my app.
   */
 class CoreDataMigrationShepherd : NSObject, CoreDataMigrationDelegate {
     
@@ -51,8 +52,19 @@ class CoreDataMigrationShepherd : NSObject, CoreDataMigrationDelegate {
                                              toPath: tildefiedWalPath)
         }
         
+        /* My documents can be automatically edited by a helper tool which
+         watches for browser bookmarks changes, etc.  We want to inhibit
+         any such automatic editing during migration. */
+        let appDelegate = NSApp.delegate as! BkmxAppDel
+        appDelegate.inhibit(forMigration: true)
+        
+        /* Note: I shall uninhibit immeditiately after our call to
+         CoreDataProgressiveMigrator.migrateStoreIfNeeded() returns.  This is
+         in my NSDocument subclass extension. */
+        
         /* I do not give the user a choice about migrating, because most
-         users will be either confused or irritated. */
+         users will be either confused or irritated.  Therefore, I hard-code
+         the return value… */
         return true
     }
 }

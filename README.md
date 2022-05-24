@@ -29,13 +29,13 @@ Our fork is it is not a tutorial example as William's code is.  CoreDataProgress
 
 * Determine where you are going to splice the call to CoreDataProgressiveMigrator into your code.  This call will require three parameters: `storeType` (for example, NSSQLiteStoreType), `storeURL` (file URL), and name of the data model (.momd) file.  This call returns synchronously.  When CoreDataProgressiveMigrator returns, your code may create its Core Data stack and load its store as before, completely unaware that anything was done.  For Core Data document stores (`NSDocument`, `NSPersistentDocument`, `BSManagedDocument`), we recommend splicing into the your document's subclass' override of `read(from:ofType:)`, just before calling super.  Note that this is before the document's Core Data Stack is created.  For "shoebox" stores, we recommend doing this just prior to creating your NSPersistentContainer or Core Data stack.
 
-* Add all of the .swift files in this repo except CoreDataMigrationShepherd.swift to your Xcode target.  CoreDataMigrationShepherd is an example of a CoreDataMigrationDelegate which you may study in designing your own deletage, if desired.  It is dependont on symbols in my project and will not compile in yours. 
+* Add all of the .swift files in this repo except CoreDataMigrationShepherd.swift to your Xcode target.  CoreDataMigrationShepherd is an example of a CoreDataMigrationDelegate which you may study in designing your own delegate, if desired.  It is dependont on symbols in my project and will not compile in yours. 
 
 * If your chosen splice location is in Objective-C code, you will need to add a shim file.  (Sorry, see explanation in documentation > CoreDataProgressiveMigrator > Details.)  Add a Swift file named something like MyClass+MigrationShim.  In this file, define an extension to MyClass containing a function marked @objc, named something like `migrateIfNeeded`, which throws, and returns Void.  You may pass in parameters if needed.  It may be either a class or instance method.  Example:
 
-    * `@objc class func migrateIfNeeded(url: URL, momdName: String) throws {.,,}
+    * `@objc class func migrateIfNeeded(url: URL, momdName: String) throws {...}`
  
-    The {...} code inside this function is now your *chosen splice location* referred to in the next step.
+    The `{...}` code inside this function is now your *chosen splice location* referred to in the next step.
 
 * At your chosen splice location, splice in these 2-3 lines of code:
 
