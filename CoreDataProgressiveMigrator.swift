@@ -23,9 +23,18 @@ class CoreDataProgressiveMigrator : NSObject {
     }
     
     /**
-     "Main" function called to do the work.
+     The function which you shall call to perform the migration
      
-     This function is synchronous; blocks until migration is complete or fails.
+     This function retruns synchronously, blocking until all migration version
+     steps are complete.  If desired, you can call it on a secondary thread
+     and wrap it with a progress indicator.
+     
+     If no file exists at the store URL which this class has been initialized
+     with, this function will throw a system error indicating such.  For
+     example, in macOS 12, the error has domain NSCocoaErrorDomain and code
+     260.  Note that this is in contrast to  the -migrate… method in my old
+     Objective-C SSYPersistentMultiMigrator class which, in this case of no
+     file, would return YES (success) with no error.
      */
     @discardableResult public func migrateStoreIfNeeded() throws -> [String]? {
        do {
@@ -44,7 +53,6 @@ class CoreDataProgressiveMigrator : NSObject {
                         comment: "error during migration of user's data to new version"))
             }
             
-
             let startingVersion = try self.startingVersionfromAmong(allVersionNames)
             if (startingVersion != currentVersion) {
                 var shouldMigrate = true
