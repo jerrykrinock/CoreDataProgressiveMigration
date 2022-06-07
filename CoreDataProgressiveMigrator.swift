@@ -5,8 +5,8 @@ import CoreData
  The top level class for Core Data progressive migrations
  
  We did not mark this class @objc because a parameter of its init() method
- is CoreDataMigrationDelegate, and the shpuldMigrate() func in that
- protocol throws an error and returns a BOOL, which is not allowed in a
+ is CoreDataMigrationDelegate, and two of the funcs in that
+ protocol throw an error and returns a BOOL, which is not allowed in a
  @objc func, and we don't want to sacrifice that Swift nicety for Objective-C.
  */
 class CoreDataProgressiveMigrator : NSObject {
@@ -23,7 +23,7 @@ class CoreDataProgressiveMigrator : NSObject {
     }
     
     /**
-     The function which you shall call to perform the migration
+     Performs the migration for tis instance
      
      This function retruns synchronously, blocking until all migration version
      steps are complete.  If desired, you can call it on a secondary thread
@@ -35,6 +35,10 @@ class CoreDataProgressiveMigrator : NSObject {
      260.  Note that this is in contrast to  the -migrate… method in my old
      Objective-C SSYPersistentMultiMigrator class which, in this case of no
      file, would return YES (success) with no error.
+
+     - returns: A sorted array of version names through which the store was
+     migrated, including the current version, or nil if the store was already
+     at the current version and no migration was necessary.
      */
     @discardableResult public func migrateStoreIfNeeded() throws -> [String]? {
        do {
@@ -79,10 +83,12 @@ class CoreDataProgressiveMigrator : NSObject {
                                     "Reinstall this application",
                                     comment: "error during migration of user's data to new version"))
                         }
-                        var relevantVersionNames = Array(allVersionNames[startingIndex...])
-                        try migrator.migrate(thruVersions: relevantVersionNames)
-                        relevantVersionNames.removeLast()
-                        return relevantVersionNames
+                        let migratedVersionNames = Array(allVersionNames[startingIndex...])
+                        try migrator.migrate(thruVersions: migratedVersionNames)
+                        if let myDelegate = self.delegate {
+                            try myDelegate.didMigrate(self.storeUrl, migratedVersionNames:migratedVersionNames)
+                        }
+                        return migratedVersionNames
                     } catch {
                         throw error as NSError
                     }

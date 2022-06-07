@@ -119,12 +119,14 @@ class CoreDataProgressiveMigratorGuts {
                                          destinationType: self.storeType,
                                          destinationOptions: nil)
             } catch let error {
+                let descFormat = NSLocalizedString(
+                    "Failed when migrating user data from model version %@ to model version %@",
+                    comment: "error during migration of user's data to new version")
+                let desc = String(format: descFormat, sourceVersionGuarded, destinVersion)
                 throw NSError.init(
                     domain: CoreDataMigrationErrorDomain,
                     code: CoreDataProgressiveMigrationErrorCodes.migrationStepFailed.rawValue,
-                    localizedDescription: NSLocalizedString(
-                        "A step failed when progressively migrating user data",
-                        comment: "error during migration of user's data to new version"),
+                    localizedDescription: desc,
                     underlyingError: error)
             }
             
